@@ -9,6 +9,5 @@ export default {
                 'Content-Type': 'application/json'
               }
         });
-        
     }
 } satisfies ExportedHandler<Env>; 
