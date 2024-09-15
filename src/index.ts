@@ -1,5 +1,6 @@
 import processAssignments from "./handlers/processAssignments";
 import canvasImport from "./handlers/canvasImport";
+import getCourses from "./handlers/getCourses";
 
 interface Assignment {
     id: string | number;
@@ -100,10 +101,14 @@ export default {
                 return new Response(JSON.stringify(transformedData), {
                     headers: { 'Content-Type': 'application/json' }
                 });
-                
+            
+            case '/api/get-courses':
+                return getCourses.fetch(request, env, ctx);
+            }
+            
         return new Response("bruh", {
             status: 404
         });
-        }
+        
     }
 } satisfies ExportedHandler<Env>;
