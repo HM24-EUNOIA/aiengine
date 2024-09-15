@@ -1,49 +1,20 @@
-import OpenAI from "openai";
-import { assignmentBreakdown } from "./functions";
-import { parse } from "partial-json";
-
-class AssignmentBreakdownCompletion {
-    openai: OpenAI;
-    outStream: WritableStreamDefaultWriter<Uint8Array>;
-
-    constructor(oai: OpenAI, ostream: WritableStreamDefaultWriter<Uint8Array>) {
-        this.openai = oai;
-        this.outStream = ostream;
-    }
-
-    async execute() {
-
-        const stream = await this.openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [
-                { role: 'system', content: assignmentBreakdown.prompt },
-                { role: 'user', content: assignmentBreakdown.samples[0] }
-            ],
-            stream: true,
-            response_format: assignmentBreakdown.schema
-        });
-
-        const encoder = new TextEncoder();
-
-        for await (const part of stream) {
-            this.outStream.write(encoder.encode(part.choices[0]?.delta?.content || ''));
-        }
-    }
-}
+import processAssignments from "./handlers/processAssignments";
+import canvasImport from "./handlers/canvasImport";
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-        const openai = new OpenAI({
-            apiKey: env.OPENAI_API_KEY,
+        const url = new URL(request.url);
+
+        switch (url.pathname) {
+            case '/api/process-assignments':
+                return processAssignments.fetch(request, env, ctx);
+
+            case '/api/canvas-import':
+                return canvasImport.fetch(request, env, ctx);
+        }
+
+        return new Response("bruh", {
+            status: 404
         });
-
-        let { readable, writable } = new TransformStream();
-        let writer = writable.getWriter();
-
-        let completion = new AssignmentBreakdownCompletion(openai, writer);
-
-        ctx.waitUntil(completion.execute().then(() => writer.close()));
-
-		return new Response(readable);
 	},
 } satisfies ExportedHandler<Env>;
